@@ -1,5 +1,9 @@
-import {v2 as cloudinary} from 'cloudinary'
-import fs from 'fs'
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
+
+if (!process.env.CLOUDINARY_API_KEY) {
+  throw new Error("Cloudinary ENV not loaded properly");
+}
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -8,30 +12,18 @@ cloudinary.config({
 });
 
 const uploadOnCloudinary = async (localFilePath) => {
+  try {
+    const response = await cloudinary.uploader.upload(localFilePath, {
+      resource_type: "auto",
+    });
 
-    try {
-        if(!localFilePath) return null;
-        //upload the file on Cloudinary
-        const response = await cloudinary.uploader.upload(localFilePath, {
-          resource_type: "auto",
-        });
+    fs.unlinkSync(localFilePath)
 
-        //file has been uploadded successfully
+    return response;
+  } catch (err) {
+    if (localFilePath) fs.unlinkSync(localFilePath);
+    return null;
+  }
+};
 
-        console.log("file is uploaded on cloudinary", result.url)
-
-        return response;
-
-    } catch (error) {
-        fs.unlinkSync(localFilePath) // remove the locally saved temperory file as the upload operation got faild
-        return null;
-    }
-}
-
-export {uploadOnCloudinary}
-
-
-
-
-
-cloudinary.uploader.upload()
+export { uploadOnCloudinary };
